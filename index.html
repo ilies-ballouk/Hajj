@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hajj Guide">
+<meta name="theme-color" content="#1a0f00">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Guide Omra & Hajj</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-light: #f0d98a;
+  --gold-pale: #fef8e7;
+  --dark: #1a0f00;
+  --dark2: #2c1a00;
+  --brown: #4a3520;
+  --cream: #fdf6e3;
+  --cream2: #f5ede0;
+  --blue: #1a4a7a;
+  --green: #1a4a1a;
+  --red: #c62828;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--dark);
+  color: var(--dark);
+  overscroll-behavior: none;
+}
+
+/* ══ SPLASH ══ */
+#splash {
+  position: fixed; inset: 0; background: var(--dark);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 1000; transition: opacity .5s ease;
+}
+#splash .s-icon { font-size: 56px; animation: pulse 2s infinite; margin-bottom: 16px; }
+#splash h1 {
+  font-family: 'Cormorant Garamond', serif;
+  color: #f5e6c0; font-size: 28px; font-weight: 600; text-align: center;
+}
+#splash p { color: var(--gold); font-size: 13px; margin-top: 8px; font-style: italic; }
+#splash .s-line { width: 80px; height: 1.5px; background: var(--gold); margin: 16px auto; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+/* ══ APP SHELL ══ */
+#app {
+  height: 100%;
+  display: flex; flex-direction: column;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ══ TOPBAR ══ */
+#topbar {
+  background: var(--dark);
+  padding: 12px 16px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+#topbar h1 {
+  font-family: 'Cormorant Garamond', serif;
+  color: #f5e6c0; font-size: 18px; font-weight: 600;
+}
+#topbar .top-sub { color: var(--gold); font-size: 10px; font-style: italic; }
+.tts-btn {
+  background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.3);
+  color: var(--gold); border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.tts-btn.playing { background: var(--gold); color: var(--dark); font-weight: 600; }
+.tts-btn:active { transform: scale(.95); }
+
+/* ══ BOTTOM NAV ══ */
+#bottomnav {
+  background: var(--dark2);
+  border-top: 1px solid rgba(201,168,76,0.2);
+  display: flex; flex-shrink: 0;
+  z-index: 10;
+}
+.nav-item {
+  flex: 1; padding: 10px 4px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; transition: all .2s; border: none; background: none;
+}
+.nav-item .ni-icon { font-size: 20px; transition: transform .2s; }
+.nav-item .ni-label { font-size: 9.5px; color: rgba(245,230,192,0.45); transition: color .2s; }
+.nav-item.active .ni-icon { transform: translateY(-2px); }
+.nav-item.active .ni-label { color: var(--gold); font-weight: 500; }
+
+/* ══ VIEWS CONTAINER ══ */
+#views-wrap {
+  flex: 1; overflow: hidden; position: relative;
+}
+
+/* ══ SWIPE PANELS ══ */
+.view-panel {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
+  transition: transform .35s cubic-bezier(0.4,0,0.2,1);
+  transform: translateX(100%);
+  background: var(--cream2);
+}
+.view-panel.active { transform: translateX(0); }
+.view-panel.left { transform: translateX(-100%); }
+
+/* ══ PANEL CONTENT ══ */
+.panel-header {
+  background: var(--dark); padding: 20px 20px 16px;
+  position: sticky; top: 0; z-index: 5;
+}
+.panel-header h2 {
+  font-family: 'Cormorant Garamond', serif;
+  color: #f5e6c0; font-size: 20px; font-weight: 600;
+}
+.panel-header p { color: var(--gold); font-size: 11px; margin-top: 3px; font-style: italic; }
+
+/* ══ DUAS PANEL ══ */
+.duas-nav {
+  display: flex; gap: 8px; padding: 14px 16px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; background: var(--cream2);
+  position: sticky; top: 0; z-index: 4; border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.duas-nav::-webkit-scrollbar { display: none; }
+.dcat-btn {
+  flex-shrink: 0; background: white; border: 1px solid rgba(201,168,76,0.3);
+  color: var(--brown); padding: 6px 14px; border-radius: 16px;
+  font-size: 11.5px; cursor: pointer; transition: all .2s;
+  white-space: nowrap; font-family: 'DM Sans', sans-serif;
+}
+.dcat-btn.active { background: var(--gold); border-color: var(--gold); color: var(--dark); font-weight: 500; }
+
+.duas-content { padding: 12px 14px 80px; }
+
+.dua-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; color: var(--dark2); margin: 16px 0 4px;
+  font-weight: 600;
+}
+.dua-section-sub { font-size: 11px; color: #888; margin-bottom: 12px; font-style: italic; }
+
+/* DUA CARD */
+.dua-card {
+  background: white; border-radius: 14px; margin-bottom: 14px;
+  box-shadow: 0 2px 12px rgba(26,15,0,0.08);
+  border: 1px solid rgba(201,168,76,0.15); overflow: hidden;
+}
+.dua-card-header {
+  background: var(--dark); padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.dua-step { background: var(--gold); color: var(--dark); font-weight: 600; font-size: 10px; padding: 2px 9px; border-radius: 12px; flex-shrink: 0; }
+.dua-card-title { color: #f5e6c0; font-size: 13px; font-family: 'Cormorant Garamond', serif; }
+.dua-card-icon { font-size: 16px; }
+
+.dua-item { padding: 12px 14px; border-bottom: 1px solid rgba(201,168,76,0.1); }
+.dua-item:last-child { border-bottom: none; }
+
+.arabic-text {
+  direction: rtl; text-align: right;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 19px; line-height: 2.1; color: var(--dark2);
+  background: rgba(201,168,76,0.07); padding: 10px 14px;
+  border-radius: 8px; border-right: 3px solid var(--gold);
+  margin-bottom: 9px;
+}
+.label { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px; }
+.ph-label { color: var(--blue); }
+.tr-label { color: var(--green); }
+.phonetic-text {
+  font-style: italic; color: var(--blue); font-size: 12px; line-height: 1.55;
+  background: rgba(26,74,122,0.05); padding: 6px 9px; border-radius: 5px;
+  border-left: 2px solid rgba(26,74,122,0.25); margin-bottom: 8px;
+}
+.transl-text {
+  color: var(--green); font-size: 12px; line-height: 1.55;
+  background: rgba(26,74,26,0.05); padding: 6px 9px; border-radius: 5px;
+  border-left: 2px solid rgba(26,74,26,0.25);
+}
+.dua-note {
+  background: rgba(201,168,76,0.1); border-left: 3px solid var(--gold);
+  padding: 7px 10px; margin-top: 8px; border-radius: 0 5px 5px 0;
+  font-size: 11px; color: var(--brown); font-style: italic;
+}
+
+/* ══ GUIDE PANEL ══ */
+.guide-list { padding: 12px 14px 80px; }
+.guide-item {
+  background: white; border-radius: 12px; margin-bottom: 10px;
+  border: 1px solid rgba(201,168,76,0.15);
+  box-shadow: 0 2px 10px rgba(26,15,0,0.06); overflow: hidden;
+}
+.guide-item-header {
+  padding: 13px 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  justify-content: space-between;
+}
+.guide-item-left { display: flex; align-items: center; gap: 10px; }
+.guide-item-icon { font-size: 20px; }
+.guide-item-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 600; color: var(--dark2);
+}
+.guide-chevron { color: var(--gold); font-size: 14px; transition: transform .25s; }
+.guide-item.open .guide-chevron { transform: rotate(90deg); }
+.guide-item-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height .35s cubic-bezier(0.4,0,0.2,1);
+  padding: 0 16px;
+}
+.guide-item.open .guide-item-body { max-height: 3000px; padding: 0 16px 14px; }
+.guide-body-content { padding-top: 10px; border-top: 1px solid rgba(201,168,76,0.15); }
+
+/* Guide body typography */
+.guide-body-content h3 { font-size: 12.5px; font-weight: 600; color: var(--dark2); margin: 10px 0 5px; }
+.guide-body-content p { font-size: 12px; line-height: 1.6; color: #333; margin-bottom: 6px; }
+.guide-body-content ul, .guide-body-content ol { margin: 4px 0 8px 18px; }
+.guide-body-content li { font-size: 12px; line-height: 1.55; color: #333; margin-bottom: 3px; }
+.guide-body-content table { width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }
+.guide-body-content th { background:var(--dark); color:#f5e6c0; padding:5px 7px; text-align:left; }
+.guide-body-content td { padding:4px 7px; border-bottom:1px solid #eee; vertical-align:top; }
+.guide-body-content tr:nth-child(even) td { background:var(--gold-pale); }
+.guide-body-content blockquote { border-left:3px solid var(--gold); padding:5px 10px; margin:7px 0; color:#555; font-style:italic; font-size:11.5px; }
+.guide-body-content .info-box { background:rgba(26,74,122,0.07); border-left:3px solid var(--blue); padding:6px 10px; margin:7px 0; border-radius:0 4px 4px 0; font-size:11px; color:var(--blue); }
+.guide-body-content .warn-box { background:rgba(198,40,40,0.06); border-left:3px solid var(--red); padding:6px 10px; margin:7px 0; border-radius:0 4px 4px 0; font-size:11px; color:#7a0000; }
+.guide-body-content .tip-box { background:rgba(26,74,26,0.07); border-left:3px solid var(--green); padding:6px 10px; margin:7px 0; border-radius:0 4px 4px 0; font-size:11px; color:var(--green); }
+.guide-body-content strong { font-weight:600; }
+.guide-body-content em { font-style:italic; }
+
+/* ══ TTS BAR ══ */
+#tts-bar {
+  position: fixed; bottom: calc(56px + var(--safe-bottom)); left: 0; right: 0;
+  background: var(--dark2); border-top: 1px solid rgba(201,168,76,0.25);
+  padding: 10px 16px; display: none; align-items: center; gap: 12px;
+  z-index: 50;
+}
+#tts-bar.visible { display: flex; }
+#tts-text { color: rgba(245,230,192,0.7); font-size: 11px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tts-ctrl { background:none; border:1px solid rgba(201,168,76,0.3); color:var(--gold); padding:5px 12px; border-radius:12px; font-size:12px; cursor:pointer; }
+.tts-stop { color:#c62828; border-color:rgba(198,40,40,0.4); }
+
+/* ══ HOME PANEL ══ */
+.home-content { padding: 16px 14px 80px; }
+.home-hero {
+  background: var(--dark); border-radius: 16px; padding: 24px 20px;
+  text-align: center; margin-bottom: 16px;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%);
+}
+.home-hero-icon { font-size: 48px; display:block; margin-bottom:12px; }
+.home-hero h2 { font-family:'Cormorant Garamond',serif; color:#f5e6c0; font-size:22px; font-weight:600; }
+.home-hero p { color:var(--gold); font-size:12px; margin-top:6px; font-style:italic; }
+.home-line { width:60px; height:1px; background:var(--gold); margin:12px auto; }
+
+.home-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.home-card {
+  background:white; border-radius:12px; padding:16px 14px;
+  border:1px solid rgba(201,168,76,0.2); cursor:pointer;
+  box-shadow:0 2px 10px rgba(26,15,0,0.06); transition:all .2s;
+  text-align:center;
+}
+.home-card:active { transform:scale(.97); }
+.home-card .hc-icon { font-size:28px; display:block; margin-bottom:8px; }
+.home-card .hc-title { font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:600; color:var(--dark2); }
+.home-card .hc-sub { font-size:10px; color:#888; margin-top:3px; }
+.home-card.gold-card { background:var(--dark); grid-column:1/-1; }
+.home-card.gold-card .hc-title { color:#f5e6c0; }
+.home-card.gold-card .hc-sub { color:var(--gold); }
+
+.quote-block {
+  background:var(--gold-pale); border-radius:12px; padding:14px 16px;
+  margin-top:12px; border-left:3px solid var(--gold);
+}
+.quote-block p { font-style:italic; font-size:12px; color:var(--brown); line-height:1.6; }
+.quote-block span { font-size:10px; color:#aaa; margin-top:4px; display:block; }
+
+/* ══ SWIPE INDICATOR ══ */
+.swipe-dots {
+  position: fixed; bottom: calc(60px + var(--safe-bottom) + 8px); left:50%; transform:translateX(-50%);
+  display:flex; gap:5px; z-index:20; pointer-events:none;
+}
+.swipe-dot { width:5px; height:5px; border-radius:50%; background:rgba(201,168,76,0.3); transition:all .2s; }
+.swipe-dot.active { background:var(--gold); width:16px; border-radius:3px; }
+
+/* ══ SCROLL TO TOP ══ */
+.scroll-top {
+  position:sticky; bottom:14px; float:right; margin-right:14px;
+  background:var(--gold); color:var(--dark); border:none; border-radius:50%;
+  width:36px; height:36px; font-size:16px; cursor:pointer;
+  box-shadow:0 3px 12px rgba(201,168,76,0.4); display:none; align-items:center; justify-content:center;
+  z-index:10;
+}
+
+/* ══ RESPONSIVE ══ */
+@media (min-width: 500px) {
+  .duas-content, .guide-list, .home-content { max-width: 500px; margin: 0 auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="s-icon">🕋</div>
+  <div class="s-line"></div>
+  <h1>Guide Omra & Hajj</h1>
+  <p>Duas · Guide complet · Étape par étape</p>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div>
+      <h1 id="topbar-title">🕋 Guide Omra & Hajj</h1>
+      <div class="top-sub" id="topbar-sub">Bienvenue</div>
+    </div>
+    <button class="tts-btn" id="tts-btn" onclick="toggleTTS()">
+      <span id="tts-icon">🔊</span>
+      <span id="tts-label">Lire</span>
+    </button>
+  </div>
+
+  <!-- VIEWS -->
+  <div id="views-wrap">
+
+    <!-- HOME -->
+    <div class="view-panel active" id="panel-home">
+      <div class="home-content">
+        <div class="home-hero">
+          <span class="home-hero-icon">🕋</span>
+          <h2>Guide Omra & Hajj</h2>
+          <div class="home-line"></div>
+          <p>Duas · Guide complet · Étape par étape<br>Utilisable hors-ligne</p>
+        </div>
+        <div class="home-cards">
+          <div class="home-card gold-card" onclick="switchTab('duas')">
+            <span class="hc-icon">🤲</span>
+            <div class="hc-title">Fiches Duas</div>
+            <div class="hc-sub">23 étapes · Arabe · Phonétique · Traduction</div>
+          </div>
+          <div class="home-card" onclick="switchTab('omra')">
+            <span class="hc-icon">🌙</span>
+            <div class="hc-title">Guide Omra</div>
+            <div class="hc-sub">10 sections complètes</div>
+          </div>
+          <div class="home-card" onclick="switchTab('hajj')">
+            <span class="hc-icon">🕋</span>
+            <div class="hc-title">Guide Hajj</div>
+            <div class="hc-sub">Du jour 8 au Tawaf d'adieu</div>
+          </div>
+        </div>
+        <div class="quote-block" style="margin-top:14px">
+          <p>« Qui rate Arafât a raté le Hajj. Qui l'atteint a accompli le Hajj. »</p>
+          <span>Hadith — At-Tirmidhi</span>
+        </div>
+        <div class="quote-block" style="margin-top:10px">
+          <p>لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ — Me voici, ô Allah, me voici !</p>
+          <span>La Talbiya</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DUAS -->
+    <div class="view-panel" id="panel-duas">
+      <div class="panel-header">
+        <h2>🤲 Fiches Duas</h2>
+        <p>Toutes les invocations étape par étape</p>
+      </div>
+      <div class="duas-nav" id="duas-nav"></div>
+      <div class="duas-content" id="duas-content"></div>
+    </div>
+
+    <!-- GUIDE OMRA -->
+    <div class="view-panel" id="panel-omra">
+      <div class="panel-header">
+        <h2>🌙 Guide Omra</h2>
+        <p>Du départ à la fin des rites</p>
+      </div>
+      <div class="guide-list" id="guide-omra-list"></div>
+    </div>
+
+    <!-- GUIDE HAJJ -->
+    <div class="view-panel" id="panel-hajj">
+      <div class="panel-header">
+        <h2>🕋 Guide Hajj</h2>
+        <p>Du 8 Dhul-Hijja au Tawaf Al-Wadâ'</p>
+      </div>
+      <div class="guide-list" id="guide-hajj-list"></div>
+    </div>
+
+  </div><!-- /views-wrap -->
+
+  <!-- SWIPE DOTS -->
+  <div class="swipe-dots" id="swipe-dots"></div>
+
+  <!-- TTS BAR -->
+  <div id="tts-bar">
+    <span id="tts-text">Lecture en cours…</span>
+    <button class="tts-ctrl" onclick="pauseTTS()">⏸</button>
+    <button class="tts-ctrl tts-stop" onclick="stopTTS()">■</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottomnav">
+    <button class="nav-item active" data-tab="home" onclick="switchTab('home')">
+      <span class="ni-icon">🏠</span>
+      <span class="ni-label">Accueil</span>
+    </button>
+    <button class="nav-item" data-tab="duas" onclick="switchTab('duas')">
+      <span class="ni-icon">🤲</span>
+      <span class="ni-label">Duas</span>
+    </button>
+    <button class="nav-item" data-tab="omra" onclick="switchTab('omra')">
+      <span class="ni-icon">🌙</span>
+      <span class="ni-label">Omra</span>
+    </button>
+    <button class="nav-item" data-tab="hajj" onclick="switchTab('hajj')">
+      <span class="ni-icon">🕋</span>
+      <span class="ni-label">Hajj</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<script src="duas.js"></script>
+<script src="guide-omra.js"></script>
+<script src="guide-hajj.js"></script>
+<script>
+// ══ STATE ══
+const TABS = ['home','duas','omra','hajj'];
+let currentTab = 'home';
+let currentDuaSection = 0;
+let ttsUtterance = null;
+let ttsPlaying = false;
+let ttsPaused = false;
+
+// ══ INIT ══
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    }, 500);
+  }, 1200);
+
+  buildDuasNav();
+  buildDuas(0);
+  buildGuide('omra');
+  buildGuide('hajj');
+  buildDots();
+  setupSwipe();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+});
+
+// ══ BUILD DOTS ══
+function buildDots() {
+  const c = document.getElementById('swipe-dots');
+  TABS.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'swipe-dot' + (i === 0 ? ' active' : '');
+    d.id = 'dot-' + t;
+    c.appendChild(d);
+  });
+}
+
+function updateDots(tab) {
+  document.querySelectorAll('.swipe-dot').forEach(d => d.classList.remove('active'));
+  const dot = document.getElementById('dot-' + tab);
+  if (dot) dot.classList.add('active');
+}
+
+// ══ TAB SWITCH ══
+function switchTab(tab) {
+  if (tab === currentTab) return;
+  stopTTS();
+
+  const panels = document.querySelectorAll('.view-panel');
+  const oldIdx = TABS.indexOf(currentTab);
+  const newIdx = TABS.indexOf(tab);
+
+  // Direction
+  const goRight = newIdx > oldIdx;
+
+  panels.forEach(p => {
+    p.style.transition = 'none';
+    if (p.classList.contains('active')) {
+      p.classList.remove('active');
+      p.classList.add(goRight ? 'left' : '');
+      if (!goRight) p.style.transform = 'translateX(100%)';
+    } else {
+      p.classList.remove('left');
+      p.style.transform = goRight ? 'translateX(100%)' : 'translateX(-100%)';
+    }
+  });
+
+  const newPanel = document.getElementById('panel-' + tab);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      panels.forEach(p => { p.style.transition = ''; });
+      // reset old
+      const oldPanel = document.getElementById('panel-' + currentTab);
+      oldPanel.style.transform = goRight ? 'translateX(-100%)' : 'translateX(100%)';
+      oldPanel.classList.remove('active');
+      // show new
+      newPanel.style.transform = 'translateX(0)';
+      newPanel.classList.add('active');
+    });
+  });
+
+  // Nav
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+
+  // Topbar
+  const labels = { home:'🕋 Guide Omra & Hajj', duas:'🤲 Fiches Duas', omra:'🌙 Guide Omra', hajj:'🕋 Guide Hajj' };
+  const subs = { home:'Bienvenue', duas:'23 étapes · Arabe · Phonétique', omra:'Du départ à la fin', hajj:'Du 8 Dhul-Hijja au Tawaf d\'adieu' };
+  document.getElementById('topbar-title').textContent = labels[tab];
+  document.getElementById('topbar-sub').textContent = subs[tab];
+
+  updateDots(tab);
+  currentTab = tab;
+
+  // Scroll to top
+  setTimeout(() => { newPanel.scrollTop = 0; }, 50);
+}
+
+// ══ BUILD DUAS ══
+function buildDuasNav() {
+  const nav = document.getElementById('duas-nav');
+  DUAS_DATA.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'dcat-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = sec.section.split(' ').slice(0,3).join(' ');
+    btn.onclick = () => {
+      document.querySelectorAll('.dcat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildDuas(i);
+      document.getElementById('panel-duas').scrollTop = 0;
+    };
+    nav.appendChild(btn);
+  });
+}
+
+function buildDuas(secIdx) {
+  currentDuaSection = secIdx;
+  const sec = DUAS_DATA[secIdx];
+  const c = document.getElementById('duas-content');
+  c.innerHTML = '';
+
+  const title = document.createElement('div');
+  title.className = 'dua-section-title';
+  title.textContent = sec.section;
+  c.appendChild(title);
+  const sub = document.createElement('div');
+  sub.className = 'dua-section-sub';
+  sub.textContent = sec.sub;
+  c.appendChild(sub);
+
+  sec.cards.forEach(card => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'dua-card';
+
+    const header = document.createElement('div');
+    header.className = 'dua-card-header';
+    header.innerHTML = `<span class="dua-step">${card.step}</span><span class="dua-card-icon">${card.icon}</span><span class="dua-card-title">${card.title}</span>`;
+    cardEl.appendChild(header);
+
+    card.duas.forEach(dua => {
+      const item = document.createElement('div');
+      item.className = 'dua-item';
+      let html = `<div class="arabic-text">${dua.arabic}</div>`;
+      html += `<div class="label ph-label">🔤 Phonétique</div>`;
+      html += `<div class="phonetic-text">${dua.phonetic}</div>`;
+      html += `<div class="label tr-label">📖 Traduction</div>`;
+      html += `<div class="transl-text">${dua.translation}</div>`;
+      if (dua.note) html += `<div class="dua-note">${dua.note}</div>`;
+      item.innerHTML = html;
+      cardEl.appendChild(item);
+    });
+
+    c.appendChild(cardEl);
+  });
+}
+
+// ══ BUILD GUIDES ══
+function buildGuide(type) {
+  const data = type === 'omra' ? window.GUIDE_OMRA : window.GUIDE_HAJJ;
+  const listEl = document.getElementById('guide-' + type + '-list');
+  listEl.innerHTML = '';
+
+  data.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'guide-item';
+
+    const header = document.createElement('div');
+    header.className = 'guide-item-header';
+    header.innerHTML = `
+      <div class="guide-item-left">
+        <span class="guide-item-icon">${item.icon}</span>
+        <span class="guide-item-title">${item.title}</span>
+      </div>
+      <span class="guide-chevron">›</span>`;
+    header.onclick = () => {
+      const wasOpen = el.classList.contains('open');
+      document.querySelectorAll('#guide-' + type + '-list .guide-item').forEach(e => e.classList.remove('open'));
+      if (!wasOpen) el.classList.add('open');
+    };
+
+    const body = document.createElement('div');
+    body.className = 'guide-item-body';
+    const bodyContent = document.createElement('div');
+    bodyContent.className = 'guide-body-content';
+    bodyContent.innerHTML = item.content;
+    body.appendChild(bodyContent);
+
+    el.appendChild(header);
+    el.appendChild(body);
+    listEl.appendChild(el);
+
+    if (i === 0) {
+      setTimeout(() => el.classList.add('open'), 100);
+    }
+  });
+}
+
+// ══ TTS ══
+function getReadableText() {
+  if (currentTab === 'home') {
+    return 'Bienvenue dans le guide Omra et Hajj. Naviguez entre les onglets pour accéder aux fiches duas, au guide Omra et au guide Hajj.';
+  }
+  if (currentTab === 'duas') {
+    const sec = DUAS_DATA[currentDuaSection];
+    let text = sec.section + '. ' + sec.sub + '. ';
+    sec.cards.forEach(card => {
+      text += card.step + ' : ' + card.title + '. ';
+      card.duas.forEach(dua => {
+        text += 'Phonétique : ' + dua.phonetic + '. ';
+        text += 'Traduction : ' + dua.translation + '. ';
+        if (dua.note) text += dua.note + '. ';
+      });
+    });
+    return text;
+  }
+  if (currentTab === 'omra') {
+    const openItem = document.querySelector('#guide-omra-list .guide-item.open');
+    if (!openItem) return 'Sélectionnez une section du guide Omra.';
+    return openItem.querySelector('.guide-body-content').innerText;
+  }
+  if (currentTab === 'hajj') {
+    const openItem = document.querySelector('#guide-hajj-list .guide-item.open');
+    if (!openItem) return 'Sélectionnez une section du guide Hajj.';
+    return openItem.querySelector('.guide-body-content').innerText;
+  }
+  return '';
+}
+
+function toggleTTS() {
+  if (ttsPlaying && !ttsPaused) {
+    pauseTTS();
+  } else if (ttsPaused) {
+    resumeTTS();
+  } else {
+    startTTS();
+  }
+}
+
+function startTTS() {
+  if (!('speechSynthesis' in window)) {
+    alert('La lecture vocale n\'est pas disponible sur ce navigateur.');
+    return;
+  }
+  stopTTS();
+  const text = getReadableText();
+  if (!text) return;
+
+  ttsUtterance = new SpeechSynthesisUtterance(text);
+  ttsUtterance.lang = 'fr-FR';
+  ttsUtterance.rate = 0.9;
+  ttsUtterance.pitch = 1;
+
+  // Try to find a French voice
+  const voices = speechSynthesis.getVoices();
+  const frVoice = voices.find(v => v.lang.startsWith('fr'));
+  if (frVoice) ttsUtterance.voice = frVoice;
+
+  ttsUtterance.onstart = () => {
+    ttsPlaying = true; ttsPaused = false;
+    updateTTSUI(true);
+    document.getElementById('tts-text').textContent = text.slice(0, 60) + '…';
+    document.getElementById('tts-bar').classList.add('visible');
+  };
+  ttsUtterance.onend = () => {
+    ttsPlaying = false; ttsPaused = false;
+    updateTTSUI(false);
+    document.getElementById('tts-bar').classList.remove('visible');
+  };
+  ttsUtterance.onerror = () => {
+    ttsPlaying = false; ttsPaused = false;
+    updateTTSUI(false);
+    document.getElementById('tts-bar').classList.remove('visible');
+  };
+
+  speechSynthesis.speak(ttsUtterance);
+}
+
+function pauseTTS() {
+  if (ttsPlaying && !ttsPaused) {
+    speechSynthesis.pause();
+    ttsPaused = true;
+    document.getElementById('tts-icon').textContent = '▶️';
+    document.getElementById('tts-label').textContent = 'Reprendre';
+  }
+}
+
+function resumeTTS() {
+  if (ttsPaused) {
+    speechSynthesis.resume();
+    ttsPaused = false;
+    document.getElementById('tts-icon').textContent = '⏸';
+    document.getElementById('tts-label').textContent = 'Pause';
+  }
+}
+
+function stopTTS() {
+  speechSynthesis.cancel();
+  ttsPlaying = false; ttsPaused = false;
+  updateTTSUI(false);
+  document.getElementById('tts-bar').classList.remove('visible');
+}
+
+function updateTTSUI(playing) {
+  const btn = document.getElementById('tts-btn');
+  const icon = document.getElementById('tts-icon');
+  const label = document.getElementById('tts-label');
+  if (playing && !ttsPaused) {
+    btn.classList.add('playing');
+    icon.textContent = '⏸'; label.textContent = 'Pause';
+  } else if (ttsPaused) {
+    btn.classList.add('playing');
+    icon.textContent = '▶️'; label.textContent = 'Reprendre';
+  } else {
+    btn.classList.remove('playing');
+    icon.textContent = '🔊'; label.textContent = 'Lire';
+  }
+}
+
+// Load voices when available
+window.speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); };
+
+// ══ SWIPE GESTURE ══
+function setupSwipe() {
+  const wrap = document.getElementById('views-wrap');
+  let startX = 0, startY = 0, isDragging = false, isHorizontal = null;
+
+  wrap.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isDragging = true;
+    isHorizontal = null;
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+
+    if (isHorizontal === null) {
+      isHorizontal = Math.abs(dx) > Math.abs(dy);
+    }
+    if (isHorizontal && Math.abs(dx) > 5) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  wrap.addEventListener('touchend', e => {
+    if (!isDragging) return;
+    isDragging = false;
+    if (!isHorizontal) return;
+
+    const dx = e.changedTouches[0].clientX - startX;
+    const threshold = 60;
+
+    if (Math.abs(dx) < threshold) return;
+
+    const idx = TABS.indexOf(currentTab);
+    if (dx < 0 && idx < TABS.length - 1) {
+      switchTab(TABS[idx + 1]);
+    } else if (dx > 0 && idx > 0) {
+      switchTab(TABS[idx - 1]);
+    }
+  }, { passive: true });
+}
+</script>
+</body>
+</html>
